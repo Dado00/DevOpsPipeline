@@ -1,0 +1,35 @@
+pipeline {
+  agent any
+  
+  stages {
+    stage('Clonar proyecto') {
+      steps {
+        git branch: 'main', url: 'https://github.com/tu-usuario/tu-proyecto.git'
+      }
+    }
+    stage('Compilar y ejecutar tests') {
+      steps {
+        sh 'tu-comando-de-compilacion' // por ejemplo, mvn clean compile
+        sh 'tu-comando-de-tests' // por ejemplo, mvn test
+      }
+    }
+    stage('Crear imagen de Docker') {
+      steps {
+        sh 'docker build -t nombre-de-imagen:${env.BUILD_NUMBER}-${env.BRANCH_NAME} .'
+      }
+    }
+    stage('Detener y crear contenedor') {
+      steps {
+        sh 'docker stop nombre-de-contenedor || true' // Detener contenedor anterior si existe
+        sh 'docker rm nombre-de-contenedor || true' // Remover contenedor anterior si existe
+        sh 'docker run -d --name nombre-de-contenedor -p 8080:8080 nombre-de-imagen:${env.BUILD_NUMBER}-${env.BRANCH_NAME}'
+      }
+    }
+  }
+  
+  post {
+    success {
+      build job: 'nombre-del-segundo-pipeline' // Ejecutar segundo pipeline en caso de éxito
+    }
+  }
+}
